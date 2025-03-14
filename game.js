@@ -5,6 +5,21 @@ const gameOverScreen = document.getElementById('gameOver');
 const finalScoreElement = document.getElementById('finalScore');
 const highScoreElement = document.getElementById('highScore');
 
+// Load images
+const images = {
+    spaceship: new Image(),
+    bullet: new Image(),
+    leftPet: new Image(),
+    rightPet: new Image(),
+    meteor: new Image()
+};
+
+images.spaceship.src = 'images/spaceship.png';
+images.bullet.src = 'images/bullet.png';
+images.leftPet.src = 'images/Lp.png';
+images.rightPet.src = 'images/RP.png';
+images.meteor.src = 'images/meteor.png';
+
 // Game constants
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -68,9 +83,8 @@ class Arrow {
         this.y = y;
         this.speed = 10;
         this.damage = damage;
-        this.width = 8;
-        this.height = 16;
-        this.rotation = -Math.PI / 2; // Point upward
+        this.width = 10;
+        this.height = 20;
     }
 
     move() {
@@ -78,24 +92,7 @@ class Arrow {
     }
 
     draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        // Draw arrow head
-        ctx.beginPath();
-        ctx.moveTo(0, -this.height/2);
-        ctx.lineTo(-this.width/2, this.height/2);
-        ctx.lineTo(this.width/2, this.height/2);
-        ctx.closePath();
-        ctx.fillStyle = COLORS.BLUE;
-        ctx.fill();
-
-        // Draw arrow shaft
-        ctx.fillStyle = COLORS.LIGHT_BLUE;
-        ctx.fillRect(-this.width/4, -this.height/2, this.width/2, this.height);
-
-        ctx.restore();
+        ctx.drawImage(images.bullet, this.x - this.width/2, this.y, this.width, this.height);
     }
 }
 
@@ -105,22 +102,12 @@ class Meteor {
         this.y = y;
         this.hits = hits;
         this.baseRadius = 30;
-        this.radius = Math.min(this.baseRadius + hits * 5, this.baseRadius * 2);
+        this.radius = Math.min(this.baseRadius + hits * 3, this.baseRadius * 2);
         this.speed = speed;
-        this.color = this.getColorByHits();
-        this.shineOffset = Math.random() * 360;
         this.rotation = Math.random() * Math.PI * 2;
         this.rotationSpeed = (Math.random() - 0.5) * 0.1;
-        this.width = this.radius * 1.5;  // Chiều rộng lớn hơn chiều cao
-        this.height = this.radius * 0.8; // Chiều cao nhỏ hơn chiều rộng
-    }
-
-    getColorByHits() {
-        if (this.hits <= 10) return COLORS.GRAY;
-        if (this.hits <= 30) return COLORS.DARK_GRAY;
-        if (this.hits <= 50) return '#4a4a4a';
-        if (this.hits <= 100) return '#2a2a2a';
-        return '#1a1a1a';
+        this.width = this.radius * 2;
+        this.height = this.radius * 2;
     }
 
     move() {
@@ -133,29 +120,16 @@ class Meteor {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
-        // Main meteor body (hình elip)
-        ctx.beginPath();
-        ctx.ellipse(0, 0, this.width, this.height, 0, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-
-        // Meteor trail
-        const gradient = ctx.createLinearGradient(this.width, 0, -this.width * 2, 0);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        // Shine effect
-        ctx.beginPath();
-        ctx.ellipse(this.width * 0.2, -this.height * 0.2, this.width * 0.15, this.height * 0.15, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
+        // Draw meteor image
+        ctx.drawImage(images.meteor, 
+            -this.width/2, -this.height/2, 
+            this.width, this.height
+        );
 
         ctx.restore();
 
         // Hit points text
-        ctx.fillStyle = COLORS.WHITE;
+        ctx.fillStyle = COLORS.RED;
         ctx.font = '20px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -201,21 +175,14 @@ class PowerUp {
 }
 
 class Pet {
-    constructor(x, y, offset) {
+    constructor(x, y, offset, isRight) {
         this.x = x;
         this.y = y;
         this.width = 40;
-        this.height = 30;
+        this.height = 40;
         this.offset = offset;
+        this.isRight = isRight;
         this.shootTimer = 0;
-        this.color = this.getRandomColor();
-    }
-
-    getRandomColor() {
-        const r = Math.floor(Math.random() * 155) + 100;
-        const g = Math.floor(Math.random() * 155) + 100;
-        const b = Math.floor(Math.random() * 155) + 100;
-        return `rgb(${r},${g},${b})`;
     }
 
     move(playerX) {
@@ -229,38 +196,8 @@ class Pet {
     }
 
     draw() {
-        // Main body
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.roundRect(this.x - this.width / 2, this.y, this.width, this.height, 10);
-        ctx.fill();
-
-        // Eyes
-        ctx.fillStyle = COLORS.WHITE;
-        ctx.beginPath();
-        ctx.arc(this.x - 10, this.y + 10, 5, 0, Math.PI * 2);
-        ctx.arc(this.x + 10, this.y + 10, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Pupils
-        ctx.fillStyle = COLORS.BLACK;
-        ctx.beginPath();
-        ctx.arc(this.x - 10, this.y + 10, 2, 0, Math.PI * 2);
-        ctx.arc(this.x + 10, this.y + 10, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Antenna
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x, this.y - 10);
-        ctx.stroke();
-
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y - 15, 5, 0, Math.PI * 2);
-        ctx.fill();
+        const img = this.isRight ? images.rightPet : images.leftPet;
+        ctx.drawImage(img, this.x - this.width/2, this.y, this.width, this.height);
     }
 }
 
@@ -573,8 +510,10 @@ function gameLoop() {
 
         if (distance < powerUp.radius + playerRect.width / 2) {
             if (powerUp.type === 'shot') {
-                gameState.shotType = powerUp.value;
-                gameState.playerWidth += 10;
+                if (powerUp.value > gameState.shotType) {
+                    gameState.shotType = powerUp.value;
+                    gameState.playerWidth += 10;
+                }
             } else if (powerUp.type === 'damage') {
                 if (powerUp.value <= 3) {
                     gameState.permDamageMultiplier = Math.min(
@@ -589,8 +528,9 @@ function gameLoop() {
                     gameState.damageTimer = 1800;
                 }
             } else if (powerUp.type === 'pet' && gameState.pets.length < gameState.maxPets) {
-                const offset = 60 * (gameState.pets.length % 2 === 0 ? 1 : -1) * (Math.floor(gameState.pets.length / 2) + 1);
-                gameState.pets.push(new Pet(gameState.playerX, HEIGHT - 70, offset));
+                const isRight = gameState.pets.length % 2 === 0;
+                const offset = 60 * (isRight ? 1 : -1) * (Math.floor(gameState.pets.length / 2) + 1);
+                gameState.pets.push(new Pet(gameState.playerX, HEIGHT - 70, offset, isRight));
             }
             return false;
         }
@@ -623,44 +563,29 @@ function gameLoop() {
 }
 
 function drawPlayer() {
-    const baseWidth = 50 + (gameState.shotType - 1) * 10;
-    const baseHeight = 40 + (gameState.shotType - 1) * 5;
+    const baseWidth = 80 + (gameState.shotType - 1) * 10;
+    const baseHeight = 80 + (gameState.shotType - 1) * 5;
     
-    // Draw base
-    ctx.fillStyle = COLORS.DARK_GRAY;
-    ctx.beginPath();
-    ctx.roundRect(
-        gameState.playerX - baseWidth / 2,
-        HEIGHT - 90,
-        baseWidth,
-        baseHeight,
-        10
+    // Draw spaceship
+    ctx.drawImage(images.spaceship, 
+        gameState.playerX - baseWidth/2, 
+        HEIGHT - 90, 
+        baseWidth, 
+        baseHeight
     );
-    ctx.fill();
 
     // Draw barrels based on shot type
     const barrelSpacing = baseWidth / (gameState.shotType + 1);
     for (let i = 0; i < gameState.shotType; i++) {
         const x = gameState.playerX - baseWidth/2 + barrelSpacing * (i + 1);
         
-        // Draw barrel
-        ctx.fillStyle = COLORS.BLACK;
-        ctx.fillRect(
-            x - 5,
-            HEIGHT - 120,
-            10,
-            30
-        );
-
-        // Draw decorative circles
-        ctx.fillStyle = COLORS.ORANGE;
+        // Draw barrel glow
+        const gradient = ctx.createRadialGradient(x, HEIGHT - 120, 2, x, HEIGHT - 120, 10);
+        gradient.addColorStop(0, 'rgba(255, 200, 0, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(x, HEIGHT - 70, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = COLORS.YELLOW;
-        ctx.beginPath();
-        ctx.arc(x, HEIGHT - 70, 5, 0, Math.PI * 2);
+        ctx.arc(x, HEIGHT - 120, 10, 0, Math.PI * 2);
         ctx.fill();
     }
 }
@@ -673,14 +598,23 @@ function drawUI() {
     ctx.fillText(`Score: ${gameState.score}`, 10, 10);
     ctx.fillStyle = COLORS.GREEN;
     ctx.fillText(`HIGH SCORE: ${gameState.highScore}`, 10, 30);
-    ctx.fillStyle = COLORS.RED;
+    
+    // Thay đổi màu HP dựa theo mức độ
+    if (gameState.hp > 100) {
+        ctx.fillStyle = COLORS.GREEN;
+    } else if (gameState.hp > 50) {
+        ctx.fillStyle = COLORS.YELLOW;
+    } else {
+        ctx.fillStyle = COLORS.RED;
+    }
     ctx.fillText(`HP: ${gameState.hp}`, 10, 50);
+    
     ctx.fillStyle = COLORS.WHITE;
     ctx.fillText(`Damage: ${gameState.baseDamage}x${gameState.permDamageMultiplier}x${gameState.tempDamageMultiplier}`, 10, 70);
     ctx.fillText(`Shots: ${gameState.shotType}`, 10, 90);
     ctx.fillText(`Pets: ${gameState.pets.length}/${gameState.maxPets}`, 10, 110);
     if (gameState.damageTimer > 0) {
-        ctx.fillStyle = COLORS.RED;
+        ctx.fillStyle = COLORS.BLUE;
         ctx.fillText(`Boost Time: ${Math.floor(gameState.damageTimer / 60)}s`, 10, 130);
     }
 }
