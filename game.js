@@ -337,7 +337,16 @@ function spawnMeteor() {
     const x = Math.random() * (WIDTH - 100) + 50;
     let hits;
 
-    if (gameState.score >= 2000) {
+    if (gameState.score >= 20000) {
+        const rand = Math.random() * 100;
+        if (rand < 70) {  // Tăng tỷ lệ từ 60% lên 70%
+            hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
+        } else if (rand < 90) {
+            hits = Math.floor(Math.random() * 15 + 15);
+        } else {
+            hits = Math.floor(Math.random() * 14 + 1);
+        }
+    } else if (gameState.score >= 2000) {
         const rand = Math.random() * 100;
         if (rand < 60) {
             hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
@@ -703,15 +712,20 @@ function drawPlayer() {
 }
 
 function drawUI() {
+    // Score ở giữa trên cùng
     ctx.fillStyle = COLORS.WHITE;
     ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(`Score: ${gameState.score}`, 10, 10);
-    ctx.fillStyle = COLORS.GREEN;
-    ctx.fillText(`High score: ${gameState.highScore}`, 10, 30);
+    ctx.fillText(`Score: ${gameState.score}`, WIDTH/2, 40);
     
-    // Thay đổi màu HP dựa theo mức độ
+    // Thông số bên trái
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = COLORS.GREEN;
+    ctx.fillText(`High score: ${gameState.highScore}`, 10, 70);
+    
+    // HP với màu động
     if (gameState.hp > 100) {
         ctx.fillStyle = COLORS.GREEN;
     } else if (gameState.hp > 50) {
@@ -719,27 +733,28 @@ function drawUI() {
     } else {
         ctx.fillStyle = COLORS.RED;
     }
-    ctx.fillText(`HP: ${gameState.hp}`, 10, 50);
+    ctx.fillText(`HP: ${gameState.hp}`, 10, 100);
     
     ctx.fillStyle = COLORS.WHITE;
-    ctx.fillText(`Damage: ${gameState.baseDamage}x${gameState.permDamageMultiplier}x${gameState.tempDamageMultiplier}`, 10, 70);
-    ctx.fillText(`Shots: ${gameState.shotType}`, 10, 90);
+    ctx.fillText(`Damage: ${gameState.baseDamage}x${gameState.permDamageMultiplier}x${gameState.tempDamageMultiplier}`, 10, 130);
+    ctx.fillText(`Shots: ${gameState.shotType}`, 10, 160);
 
-    ctx.fillStyle = COLORS.WHITE;
+    // Thông số bên phải
+    ctx.textAlign = 'right';
     const permSpeedBoost = Math.floor((gameState.permShootSpeedMultiplier - 1) * 100);
     const tempSpeedBoost = Math.floor((gameState.tempShootSpeedMultiplier - 1) * 100);
-    ctx.fillText(`Speed: ${permSpeedBoost}%${tempSpeedBoost > 0 ? ` + ${tempSpeedBoost}%` : ''}`, 10, 110);
+    ctx.fillText(`Speed: ${permSpeedBoost}%${tempSpeedBoost > 0 ? ` + ${tempSpeedBoost}%` : ''}`, WIDTH - 10, 70);
     
-    ctx.fillText(`Pets: ${gameState.pets.length}/${gameState.maxPets}`, 10, 130);
+    ctx.fillText(`Pets: ${gameState.pets.length}/${gameState.maxPets}`, WIDTH - 10, 100);
     
     if (gameState.damageTimer > 0) {
         ctx.fillStyle = COLORS.BLUE;
-        ctx.fillText(`Boost time: ${Math.floor(gameState.damageTimer / 60)}s`, 10, 150);
+        ctx.fillText(`Boost time: ${Math.floor(gameState.damageTimer / 60)}s`, WIDTH - 10, 130);
     }
     
     if (gameState.speedBoostTimer > 0) {
         ctx.fillStyle = '#FF69B4';
-        ctx.fillText(`Speed boost: ${Math.floor(gameState.speedBoostTimer / 60)}s`, 10, 170);
+        ctx.fillText(`Speed boost: ${Math.floor(gameState.speedBoostTimer / 60)}s`, WIDTH - 10, 160);
     }
 }
 
