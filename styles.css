@@ -1,0 +1,49 @@
+.social-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+    padding: 0;
+}
+
+.social-icon:hover {
+    transform: scale(1.1);
+}
+
+.facebook {
+    background-color: #1877f2;
+}
+
+.twitter {
+    background-color: #000000;
+    border: 2px solid white;
+}
+
+.telegram {
+    background-color: #0088cc;
+}
+
+.social-icon i {
+    color: white !important;
+    font-size: 20px;
+}
+
+.share-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.share-text {
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+} 
