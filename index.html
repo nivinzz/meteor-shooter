@@ -136,7 +136,7 @@
 
         /* Mobile controls */
         #mobileControls {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             left: 0;
             right: 0;
@@ -144,24 +144,26 @@
             justify-content: space-between;
             padding: 0 20px;
             z-index: 1000;
+            pointer-events: none;
         }
 
         .control-button {
-            width: 60px;
-            height: 60px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border: 2px solid white;
+            width: 70px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
         }
 
         .control-button i {
-            color: white;
-            font-size: 24px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 30px;
         }
 
         @media (min-width: 1024px) {
