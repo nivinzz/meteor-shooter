@@ -16,7 +16,7 @@ const images = {
 
 images.spaceship.src = 'images/spaceship.png';
 images.bullet.src = 'images/bullet.png';
-images.leftPet.src = 'images/Lp.png';
+images.leftPet.src = 'images/LP.png';
 images.rightPet.src = 'images/RP.png';
 images.meteor.src = 'images/meteor.png';
 
