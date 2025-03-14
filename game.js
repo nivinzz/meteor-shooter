@@ -337,9 +337,27 @@ function spawnMeteor() {
     const x = Math.random() * (WIDTH - 100) + 50;
     let hits;
 
-    if (gameState.score >= 20000) {
+    if (gameState.score >= 100000) {
         const rand = Math.random() * 100;
-        if (rand < 70) {  // Tăng tỷ lệ từ 60% lên 70%
+        if (rand < 90) {  // Tăng tỷ lệ lên 90%
+            hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
+        } else if (rand < 95) {
+            hits = Math.floor(Math.random() * 15 + 15);
+        } else {
+            hits = Math.floor(Math.random() * 14 + 1);
+        }
+    } else if (gameState.score >= 50000) {
+        const rand = Math.random() * 100;
+        if (rand < 80) {  // Tăng tỷ lệ lên 80%
+            hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
+        } else if (rand < 90) {
+            hits = Math.floor(Math.random() * 15 + 15);
+        } else {
+            hits = Math.floor(Math.random() * 14 + 1);
+        }
+    } else if (gameState.score >= 20000) {
+        const rand = Math.random() * 100;
+        if (rand < 70) {
             hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
         } else if (rand < 90) {
             hits = Math.floor(Math.random() * 15 + 15);
