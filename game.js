@@ -756,6 +756,39 @@ window.addEventListener('keyup', e => {
     }
 });
 
+// Mobile controls
+const leftButton = document.getElementById('leftButton');
+const rightButton = document.getElementById('rightButton');
+
+// Touch events for left button
+leftButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    keys.ArrowLeft = true;
+});
+leftButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    keys.ArrowLeft = false;
+});
+
+// Touch events for right button
+rightButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    keys.ArrowRight = true;
+});
+rightButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    keys.ArrowRight = false;
+});
+
+// Mouse events for testing on desktop
+leftButton.addEventListener('mousedown', () => keys.ArrowLeft = true);
+leftButton.addEventListener('mouseup', () => keys.ArrowLeft = false);
+leftButton.addEventListener('mouseleave', () => keys.ArrowLeft = false);
+
+rightButton.addEventListener('mousedown', () => keys.ArrowRight = true);
+rightButton.addEventListener('mouseup', () => keys.ArrowRight = false);
+rightButton.addEventListener('mouseleave', () => keys.ArrowRight = false);
+
 // Add event listener for Play Again button
 document.getElementById('playAgainButton').addEventListener('click', () => {
     resetGame();
@@ -792,19 +825,19 @@ function captureGameOver() {
 }
 
 function shareToFacebook() {
-    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\nhttps://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=https://meteor-shooter.vercel.app/&quote=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 
 function shareToX() {
-    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\nhttps://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://twitter.com/intent/tweet?text=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 
 function shareToTelegram() {
-    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\nhttps://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://t.me/share/url?url=https://meteor-shooter.vercel.app/&text=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
