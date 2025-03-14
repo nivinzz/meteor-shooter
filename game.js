@@ -792,19 +792,19 @@ function captureGameOver() {
 }
 
 function shareToFacebook() {
-    const text = encodeURIComponent(`I achieved 33331 points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=https://meteor-shooter.vercel.app/&quote=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 
 function shareToX() {
-    const text = encodeURIComponent(`I achieved 33331 points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://twitter.com/intent/tweet?text=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
 
 function shareToTelegram() {
-    const text = encodeURIComponent(`I achieved 33331 points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const text = encodeURIComponent(`I achieved ${gameState.score} points in Meteor Shooter game, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
     const shareUrl = `https://t.me/share/url?url=https://meteor-shooter.vercel.app/&text=${text}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
 }
