@@ -145,6 +145,7 @@
             padding: 0;
             z-index: 1000;
             pointer-events: none;
+            touch-action: none;
         }
 
         .control-button {
@@ -159,7 +160,10 @@
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             pointer-events: auto;
-            backdrop-filter: blur(2px);
+            touch-action: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #leftButton {
@@ -173,6 +177,7 @@
         .control-button i {
             color: rgba(255, 255, 255, 0.8);
             font-size: 30px;
+            pointer-events: none;
         }
 
         @media (min-width: 1024px) {
@@ -185,6 +190,14 @@
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="600" height="800"></canvas>
+        <div id="mobileControls">
+            <div id="leftButton" class="control-button">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div id="rightButton" class="control-button">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
         <div id="gameOver">
             <h1>GAME OVER</h1>
             <p>Score: <span id="finalScore">0</span></p>
@@ -202,14 +215,6 @@
                     <i class="fab fa-telegram"></i>
                 </button>
             </div>
-        </div>
-    </div>
-    <div id="mobileControls">
-        <div id="leftButton" class="control-button">
-            <i class="fas fa-chevron-left"></i>
-        </div>
-        <div id="rightButton" class="control-button">
-            <i class="fas fa-chevron-right"></i>
         </div>
     </div>
     <script src="game.js"></script>
