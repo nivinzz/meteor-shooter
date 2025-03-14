@@ -57,7 +57,8 @@ let gameState = {
     MAX_PERM_MULTIPLIER: 3,
     MAX_TEMP_MULTIPLIER: 5,
     MAX_BUBBLE_HITS: 199,
-    PET_DROP_CHANCE: 10
+    PET_DROP_CHANCE: 10,
+    explosions: []
 };
 
 // Classes
@@ -67,8 +68,9 @@ class Arrow {
         this.y = y;
         this.speed = 10;
         this.damage = damage;
-        this.width = 10;
-        this.height = 20;
+        this.width = 8;
+        this.height = 16;
+        this.rotation = -Math.PI / 2; // Point upward
     }
 
     move() {
@@ -76,8 +78,24 @@ class Arrow {
     }
 
     draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Draw arrow head
+        ctx.beginPath();
+        ctx.moveTo(0, -this.height/2);
+        ctx.lineTo(-this.width/2, this.height/2);
+        ctx.lineTo(this.width/2, this.height/2);
+        ctx.closePath();
         ctx.fillStyle = COLORS.BLUE;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fill();
+
+        // Draw arrow shaft
+        ctx.fillStyle = COLORS.LIGHT_BLUE;
+        ctx.fillRect(-this.width/4, -this.height/2, this.width/2, this.height);
+
+        ctx.restore();
     }
 }
 
@@ -246,6 +264,55 @@ class Pet {
     }
 }
 
+class Explosion {
+    constructor(x, y, size) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.particles = [];
+        this.lifetime = 30;
+        this.createParticles();
+    }
+
+    createParticles() {
+        const numParticles = 15;
+        for (let i = 0; i < numParticles; i++) {
+            const angle = (Math.PI * 2 * i) / numParticles;
+            const speed = Math.random() * 3 + 2;
+            this.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: Math.random() * 3 + 2,
+                color: `hsl(${Math.random() * 60 + 10}, 100%, 50%)`
+            });
+        }
+    }
+
+    update() {
+        this.lifetime--;
+        this.particles.forEach(particle => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.size *= 0.95;
+        });
+    }
+
+    draw() {
+        this.particles.forEach(particle => {
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fillStyle = particle.color;
+            ctx.fill();
+        });
+    }
+
+    isDead() {
+        return this.lifetime <= 0;
+    }
+}
+
 // Game functions
 function loadHighScore() {
     return parseInt(localStorage.getItem('highScore')) || 0;
@@ -264,6 +331,7 @@ function resetGame() {
         bubbles: [],
         powerUps: [],
         pets: [],
+        explosions: [],
         score: 0,
         baseDamage: 1,
         permDamageMultiplier: 1,
@@ -282,7 +350,7 @@ function spawnMeteor() {
     const x = Math.random() * (WIDTH - 100) + 50;
     let hits;
 
-    if (gameState.score >= 100) {
+    if (gameState.score >= 500) {
         const rand = Math.random() * 100;
         if (rand < 50) {
             hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
@@ -291,7 +359,7 @@ function spawnMeteor() {
         } else {
             hits = Math.floor(Math.random() * 14 + 1);
         }
-    } else if (gameState.score >= 50) {
+    } else if (gameState.score >= 100) {
         const rand = Math.random() * 100;
         if (rand < 30) {
             hits = Math.floor(Math.random() * 31 + 20);
@@ -475,7 +543,9 @@ function gameLoop() {
             if (distance < meteor.radius + arrow.width / 2) {
                 meteor.hits -= arrow.damage;
                 gameState.arrows.splice(i, 1);
+                gameState.explosions.push(new Explosion(arrow.x, arrow.y, 10));
                 if (meteor.hits <= 0) {
+                    gameState.explosions.push(new Explosion(meteor.x, meteor.y, meteor.radius));
                     spawnPowerUpFromBubble(meteor.x, meteor.y);
                     gameState.score += 10;
                     return false;
@@ -535,6 +605,13 @@ function gameLoop() {
     gameState.pets.forEach(pet => pet.draw());
     drawUI();
 
+    // Update and draw explosions
+    gameState.explosions = gameState.explosions.filter(explosion => {
+        explosion.update();
+        explosion.draw();
+        return !explosion.isDead();
+    });
+
     // Check game over
     if (gameState.gameOver) {
         gameOverScreen.style.display = 'block';
@@ -546,30 +623,36 @@ function gameLoop() {
 }
 
 function drawPlayer() {
+    const baseWidth = 50 + (gameState.shotType - 1) * 10;
+    const baseHeight = 40 + (gameState.shotType - 1) * 5;
+    
     // Draw base
     ctx.fillStyle = COLORS.DARK_GRAY;
     ctx.beginPath();
     ctx.roundRect(
-        gameState.playerX - gameState.playerWidth / 2,
+        gameState.playerX - baseWidth / 2,
         HEIGHT - 90,
-        gameState.playerWidth,
-        40,
+        baseWidth,
+        baseHeight,
         10
     );
     ctx.fill();
 
-    // Draw barrel
-    ctx.fillStyle = COLORS.BLACK;
-    ctx.fillRect(
-        gameState.playerX - 10,
-        HEIGHT - 120,
-        20,
-        30
-    );
+    // Draw barrels based on shot type
+    const barrelSpacing = baseWidth / (gameState.shotType + 1);
+    for (let i = 0; i < gameState.shotType; i++) {
+        const x = gameState.playerX - baseWidth/2 + barrelSpacing * (i + 1);
+        
+        // Draw barrel
+        ctx.fillStyle = COLORS.BLACK;
+        ctx.fillRect(
+            x - 5,
+            HEIGHT - 120,
+            10,
+            30
+        );
 
-    // Draw decorative circles
-    for (let i = 0; i < 3; i++) {
-        const x = gameState.playerX + (i - 1) * 24;
+        // Draw decorative circles
         ctx.fillStyle = COLORS.ORANGE;
         ctx.beginPath();
         ctx.arc(x, HEIGHT - 70, 8, 0, Math.PI * 2);
