@@ -16,7 +16,7 @@ const images = {
 
 images.spaceship.src = 'images/spaceship.png';
 images.bullet.src = 'images/bullet.png';
-images.leftPet.src = 'images/LP.png';
+images.leftPet.src = 'images/Lp.png';
 images.rightPet.src = 'images/RP.png';
 images.meteor.src = 'images/meteor.png';
 
@@ -62,6 +62,10 @@ let gameState = {
     hp: 200,
     shotType: 1,
     shootTimer: 0,
+    shootSpeed: 20,
+    permShootSpeedMultiplier: 1,
+    tempShootSpeedMultiplier: 1,
+    speedBoostTimer: 0,
     damageTimer: 0,
     bubbleSpawnTime: 0,
     baseSpawnInterval: 120,
@@ -161,7 +165,10 @@ class PowerUp {
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.type === 'pet' ? 'P' : this.value, this.x, this.y);
+        let displayText = this.type === 'pet' ? 'P' : 
+                         (this.type === 'perm_speed' || this.type === 'temp_speed') ? 'SPD' : 
+                         this.value;
+        ctx.fillText(displayText, this.x, this.y);
     }
 
     getColor() {
@@ -170,6 +177,8 @@ class PowerUp {
             if (this.value <= 3) return COLORS.GREEN;
             return COLORS.RED;
         }
+        if (this.type === 'perm_speed') return '#90EE90';
+        if (this.type === 'temp_speed') return '#FF69B4';
         return COLORS.PURPLE;
     }
 }
@@ -276,6 +285,10 @@ function resetGame() {
         hp: 200,
         shotType: 1,
         shootTimer: 0,
+        shootSpeed: 20,
+        permShootSpeedMultiplier: 1,
+        tempShootSpeedMultiplier: 1,
+        speedBoostTimer: 0,
         damageTimer: 0,
         bubbleSpawnTime: 0,
         gameOver: false
@@ -325,14 +338,22 @@ function spawnPowerUp() {
         const x = Math.random() * (WIDTH - 100) + 50;
         const rand = Math.random() * 10 + 1;
         
-        if (rand <= 5) {
+        if (rand <= 4) {
             const shotType = Math.random() * 100 < 90 ? 
                 Math.floor(Math.random() * 4 + 2) : 
                 Math.floor(Math.random() * 2 + 6);
             gameState.powerUps.push(new PowerUp(x, 0, 'shot', shotType));
-        } else if (rand <= 9) {
+        } else if (rand <= 7) {
             const damageMult = Math.floor(Math.random() * 4 + 2);
             gameState.powerUps.push(new PowerUp(x, 0, 'damage', damageMult));
+        } else if (rand <= 9) {
+            if (Math.random() < 0.4) {
+                const speedBoost = [10, 20][Math.floor(Math.random() * 2)];
+                gameState.powerUps.push(new PowerUp(x, 0, 'perm_speed', speedBoost));
+            } else {
+                const speedBoost = [30, 40, 50][Math.floor(Math.random() * 3)];
+                gameState.powerUps.push(new PowerUp(x, 0, 'temp_speed', speedBoost));
+            }
         } else {
             gameState.powerUps.push(new PowerUp(x, 0, 'pet', 1));
         }
@@ -422,7 +443,9 @@ function gameLoop() {
 
     // Auto shoot
     gameState.shootTimer++;
-    if (gameState.shootTimer >= 20) {
+    const totalSpeedMultiplier = gameState.permShootSpeedMultiplier * gameState.tempShootSpeedMultiplier;
+    const adjustedShootTimer = Math.floor(20 / totalSpeedMultiplier);
+    if (gameState.shootTimer >= adjustedShootTimer) {
         shootArrows();
         gameState.pets.forEach(pet => pet.shoot());
         gameState.shootTimer = 0;
@@ -527,10 +550,17 @@ function gameLoop() {
                     );
                     gameState.damageTimer = 1800;
                 }
+            } else if (powerUp.type === 'perm_speed') {
+                gameState.permShootSpeedMultiplier = 1 + (powerUp.value / 100);
+            } else if (powerUp.type === 'temp_speed') {
+                gameState.tempShootSpeedMultiplier = 1 + (powerUp.value / 100);
+                gameState.speedBoostTimer = 1800;
             } else if (powerUp.type === 'pet' && gameState.pets.length < gameState.maxPets) {
                 const isRight = gameState.pets.length % 2 === 0;
-                const offset = 60 * (isRight ? 1 : -1) * (Math.floor(gameState.pets.length / 2) + 1);
-                gameState.pets.push(new Pet(gameState.playerX, HEIGHT - 70, offset, isRight));
+                const pairIndex = Math.floor(gameState.pets.length / 2);
+                const offset = 60 * (isRight ? 1 : -1) * (pairIndex + 1);
+                const pet = new Pet(gameState.playerX, HEIGHT - 70, offset, isRight);
+                gameState.pets.push(pet);
             }
             return false;
         }
@@ -557,6 +587,14 @@ function gameLoop() {
         gameOverScreen.style.display = 'block';
         finalScoreElement.textContent = gameState.score;
         highScoreElement.textContent = gameState.highScore;
+    }
+
+    // Update speed boost timer
+    if (gameState.speedBoostTimer > 0) {
+        gameState.speedBoostTimer--;
+        if (gameState.speedBoostTimer === 0) {
+            gameState.tempShootSpeedMultiplier = 1;
+        }
     }
 
     requestAnimationFrame(gameLoop);
@@ -616,6 +654,14 @@ function drawUI() {
     if (gameState.damageTimer > 0) {
         ctx.fillStyle = COLORS.BLUE;
         ctx.fillText(`Boost Time: ${Math.floor(gameState.damageTimer / 60)}s`, 10, 130);
+    }
+    ctx.fillStyle = COLORS.WHITE;
+    const totalSpeedBoost = Math.floor((gameState.permShootSpeedMultiplier * gameState.tempShootSpeedMultiplier - 1) * 100);
+    ctx.fillText(`Speed: ${totalSpeedBoost}%`, 10, 150);
+    
+    if (gameState.speedBoostTimer > 0) {
+        ctx.fillStyle = '#FF69B4';
+        ctx.fillText(`Speed Boost: ${Math.floor(gameState.speedBoostTimer / 60)}s`, 10, 170);
     }
 }
 
