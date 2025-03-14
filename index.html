@@ -32,6 +32,7 @@
             width: 600px;
             height: 800px;
             background-color: #000;
+            overflow: hidden;
         }
 
         #gameCanvas {
@@ -132,6 +133,53 @@
             color: white !important;
             font-size: 20px;
         }
+
+        /* Mobile controls */
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .control-button {
+            width: 70px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
+            backdrop-filter: blur(2px);
+        }
+
+        #leftButton {
+            margin-left: 20px;
+        }
+
+        #rightButton {
+            margin-right: 20px;
+        }
+
+        .control-button i {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 30px;
+        }
+
+        @media (min-width: 1024px) {
+            #mobileControls {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -154,6 +202,14 @@
                     <i class="fab fa-telegram"></i>
                 </button>
             </div>
+        </div>
+    </div>
+    <div id="mobileControls">
+        <div id="leftButton" class="control-button">
+            <i class="fas fa-chevron-left"></i>
+        </div>
+        <div id="rightButton" class="control-button">
+            <i class="fas fa-chevron-right"></i>
         </div>
     </div>
     <script src="game.js"></script>
