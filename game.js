@@ -14,6 +14,39 @@ const images = {
     meteor: new Image()
 };
 
+// Track loaded images
+let loadedImages = 0;
+const totalImages = Object.keys(images).length;
+
+function startGame() {
+    gameLoop();
+}
+
+// Load all images with error handling
+images.spaceship.onload = () => { loadedImages++; checkAllImagesLoaded(); };
+images.bullet.onload = () => { loadedImages++; checkAllImagesLoaded(); };
+images.leftPet.onload = () => { loadedImages++; checkAllImagesLoaded(); };
+images.rightPet.onload = () => { loadedImages++; checkAllImagesLoaded(); };
+images.meteor.onload = () => { loadedImages++; checkAllImagesLoaded(); };
+
+images.spaceship.onerror = handleImageError;
+images.bullet.onerror = handleImageError;
+images.leftPet.onerror = handleImageError;
+images.rightPet.onerror = handleImageError;
+images.meteor.onerror = handleImageError;
+
+function handleImageError() {
+    console.error('Failed to load image:', this.src);
+}
+
+function checkAllImagesLoaded() {
+    if (loadedImages === totalImages) {
+        console.log('All images loaded successfully');
+        startGame();
+    }
+}
+
+// Set image sources
 images.spaceship.src = 'images/spaceship.png';
 images.bullet.src = 'images/bullet.png';
 images.leftPet.src = 'images/LP.png';
@@ -50,7 +83,7 @@ const stars = Array.from({ length: 100 }, () => ({
 let gameState = {
     playerX: WIDTH / 2,
     playerWidth: 50,
-    playerSpeed: 5,
+    playerSpeed: 3,
     arrows: [],
     bubbles: [],
     powerUps: [],
@@ -85,7 +118,7 @@ class Arrow {
     constructor(x, y, damage) {
         this.x = x;
         this.y = y;
-        this.speed = 10;
+        this.speed = 3;
         this.damage = damage;
         this.width = 10;
         this.height = 20;
@@ -105,6 +138,7 @@ class Meteor {
         this.x = x;
         this.y = y;
         this.hits = hits;
+        this.initialHits = hits;  // Store initial hits
         this.baseRadius = 30;
         this.radius = Math.min(this.baseRadius + hits * 3, this.baseRadius * 2);
         this.speed = speed;
@@ -137,7 +171,7 @@ class Meteor {
         ctx.font = '20px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.hits, this.x, this.y);
+        ctx.fillText(Math.max(0, this.hits), this.x, this.y);
     }
 }
 
@@ -147,28 +181,12 @@ class PowerUp {
         this.y = y;
         this.type = type;
         this.value = value;
-        this.speed = 3;
+        this.speed = 1;
         this.radius = 15;
     }
 
     move() {
         this.y += this.speed;
-    }
-
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.getColor();
-        ctx.fill();
-
-        ctx.fillStyle = COLORS.BLACK;
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        let displayText = this.type === 'pet' ? 'P' : 
-                         (this.type === 'perm_speed' || this.type === 'temp_speed') ? 'SPD' : 
-                         this.value;
-        ctx.fillText(displayText, this.x, this.y);
     }
 
     getColor() {
@@ -179,7 +197,26 @@ class PowerUp {
         }
         if (this.type === 'perm_speed') return '#90EE90';
         if (this.type === 'temp_speed') return '#FF69B4';
+        if (this.type === 'boom') return '#FF4500';
         return COLORS.PURPLE;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.getColor();
+        ctx.fill();
+
+        ctx.fillStyle = COLORS.BLACK;
+        ctx.font = (this.type === 'perm_speed' || this.type === 'temp_speed' || this.type === 'boom') ? '12px Arial' : '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let displayText = this.type === 'pet' ? 'P' : 
+                         this.type === 'boom' ? 'B' :
+                         (this.type === 'perm_speed' || this.type === 'temp_speed') ? 
+                         `${this.value}%` : 
+                         this.value;
+        ctx.fillText(displayText, this.x, this.y);
     }
 }
 
@@ -300,7 +337,16 @@ function spawnMeteor() {
     const x = Math.random() * (WIDTH - 100) + 50;
     let hits;
 
-    if (gameState.score >= 500) {
+    if (gameState.score >= 2000) {
+        const rand = Math.random() * 100;
+        if (rand < 60) {
+            hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
+        } else if (rand < 90) {
+            hits = Math.floor(Math.random() * 15 + 15);
+        } else {
+            hits = Math.floor(Math.random() * 14 + 1);
+        }
+    } else if (gameState.score >= 500) {
         const rand = Math.random() * 100;
         if (rand < 50) {
             hits = Math.floor(Math.random() * (gameState.MAX_BUBBLE_HITS - 30) + 30);
@@ -321,10 +367,10 @@ function spawnMeteor() {
         hits = Math.floor(Math.random() * Math.min(baseMaxHits, gameState.MAX_BUBBLE_HITS) + 1);
     }
 
-    const baseSpeed = gameState.baseBubbleSpeed + Math.min(Math.floor(gameState.score / 50), 5);
-    const speed = baseSpeed + (Math.random() - 0.5);
+    const baseSpeed = 0.5 + Math.min(Math.floor(gameState.score / 200), 1);
+    const speed = baseSpeed + (Math.random() - 0.5) * 0.3;
     
-    gameState.bubbles.push(new Meteor(x, 0, hits, Math.max(speed, 0.8)));
+    gameState.bubbles.push(new Meteor(x, 0, hits, Math.max(speed, 0.3)));
 }
 
 function spawnPowerUpFromBubble(x, y) {
@@ -337,6 +383,13 @@ function spawnPowerUp() {
     if (Math.random() * 100 < 15) {
         const x = Math.random() * (WIDTH - 100) + 50;
         const rand = Math.random() * 10 + 1;
+        
+        // Add boom power-up with low probability when score > 1000
+        if (gameState.score >= 1000 && Math.random() < 0.15) {
+            const boomValue = [-20, -30, -40, -50, -60, -70][Math.floor(Math.random() * 6)];
+            gameState.powerUps.push(new PowerUp(x, 0, 'boom', boomValue));
+            return;
+        }
         
         if (rand <= 4) {
             const shotType = Math.random() * 100 < 90 ? 
@@ -481,14 +534,13 @@ function gameLoop() {
     gameState.bubbles = gameState.bubbles.filter(meteor => {
         meteor.move();
         if (meteor.y > HEIGHT) {
-            gameState.hp -= meteor.hits;
+            gameState.hp -= Math.abs(meteor.hits);  // Use absolute value for HP reduction
             if (gameState.hp <= 0) {
                 gameState.gameOver = true;
                 if (gameState.score > gameState.highScore) {
                     gameState.highScore = gameState.score;
                     saveHighScore(gameState.highScore);
                 }
-                return false;
             }
             return false;
         }
@@ -507,7 +559,7 @@ function gameLoop() {
                 if (meteor.hits <= 0) {
                     gameState.explosions.push(new Explosion(meteor.x, meteor.y, meteor.radius));
                     spawnPowerUpFromBubble(meteor.x, meteor.y);
-                    gameState.score += 10;
+                    gameState.score += meteor.initialHits;  // Add initial hits as score
                     return false;
                 }
             }
@@ -532,7 +584,23 @@ function gameLoop() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < powerUp.radius + playerRect.width / 2) {
-            if (powerUp.type === 'shot') {
+            if (powerUp.type === 'boom') {
+                // Apply damage to all meteors
+                gameState.bubbles.forEach(meteor => {
+                    meteor.hits += powerUp.value; // Subtract points from all meteors
+                    if (meteor.hits <= 0) {
+                        gameState.explosions.push(new Explosion(meteor.x, meteor.y, meteor.radius));
+                        spawnPowerUpFromBubble(meteor.x, meteor.y);
+                        gameState.score += meteor.initialHits;
+                    }
+                });
+                // Create explosions across the screen
+                for(let i = 0; i < 5; i++) {
+                    const randX = Math.random() * WIDTH;
+                    const randY = Math.random() * (HEIGHT - 200);
+                    gameState.explosions.push(new Explosion(randX, randY, 30));
+                }
+            } else if (powerUp.type === 'shot') {
                 if (powerUp.value > gameState.shotType) {
                     gameState.shotType = powerUp.value;
                     gameState.playerWidth += 10;
@@ -551,10 +619,16 @@ function gameLoop() {
                     gameState.damageTimer = 1800;
                 }
             } else if (powerUp.type === 'perm_speed') {
-                gameState.permShootSpeedMultiplier = 1 + (powerUp.value / 100);
+                const newSpeed = 1 + (powerUp.value / 100);
+                if (newSpeed > gameState.permShootSpeedMultiplier) {
+                    gameState.permShootSpeedMultiplier = newSpeed;
+                }
             } else if (powerUp.type === 'temp_speed') {
-                gameState.tempShootSpeedMultiplier = 1 + (powerUp.value / 100);
-                gameState.speedBoostTimer = 1800;
+                const newSpeed = 1 + (powerUp.value / 100);
+                if (newSpeed > gameState.tempShootSpeedMultiplier) {
+                    gameState.tempShootSpeedMultiplier = newSpeed;
+                    gameState.speedBoostTimer = 1800;
+                }
             } else if (powerUp.type === 'pet' && gameState.pets.length < gameState.maxPets) {
                 const isRight = gameState.pets.length % 2 === 0;
                 const pairIndex = Math.floor(gameState.pets.length / 2);
@@ -635,7 +709,7 @@ function drawUI() {
     ctx.textBaseline = 'top';
     ctx.fillText(`Score: ${gameState.score}`, 10, 10);
     ctx.fillStyle = COLORS.GREEN;
-    ctx.fillText(`HIGH SCORE: ${gameState.highScore}`, 10, 30);
+    ctx.fillText(`High score: ${gameState.highScore}`, 10, 30);
     
     // Thay đổi màu HP dựa theo mức độ
     if (gameState.hp > 100) {
@@ -650,18 +724,22 @@ function drawUI() {
     ctx.fillStyle = COLORS.WHITE;
     ctx.fillText(`Damage: ${gameState.baseDamage}x${gameState.permDamageMultiplier}x${gameState.tempDamageMultiplier}`, 10, 70);
     ctx.fillText(`Shots: ${gameState.shotType}`, 10, 90);
-    ctx.fillText(`Pets: ${gameState.pets.length}/${gameState.maxPets}`, 10, 110);
+
+    ctx.fillStyle = COLORS.WHITE;
+    const permSpeedBoost = Math.floor((gameState.permShootSpeedMultiplier - 1) * 100);
+    const tempSpeedBoost = Math.floor((gameState.tempShootSpeedMultiplier - 1) * 100);
+    ctx.fillText(`Speed: ${permSpeedBoost}%${tempSpeedBoost > 0 ? ` + ${tempSpeedBoost}%` : ''}`, 10, 110);
+    
+    ctx.fillText(`Pets: ${gameState.pets.length}/${gameState.maxPets}`, 10, 130);
+    
     if (gameState.damageTimer > 0) {
         ctx.fillStyle = COLORS.BLUE;
-        ctx.fillText(`Boost Time: ${Math.floor(gameState.damageTimer / 60)}s`, 10, 130);
+        ctx.fillText(`Boost time: ${Math.floor(gameState.damageTimer / 60)}s`, 10, 150);
     }
-    ctx.fillStyle = COLORS.WHITE;
-    const totalSpeedBoost = Math.floor((gameState.permShootSpeedMultiplier * gameState.tempShootSpeedMultiplier - 1) * 100);
-    ctx.fillText(`Speed: ${totalSpeedBoost}%`, 10, 150);
     
     if (gameState.speedBoostTimer > 0) {
         ctx.fillStyle = '#FF69B4';
-        ctx.fillText(`Speed Boost: ${Math.floor(gameState.speedBoostTimer / 60)}s`, 10, 170);
+        ctx.fillText(`Speed boost: ${Math.floor(gameState.speedBoostTimer / 60)}s`, 10, 170);
     }
 }
 
@@ -683,6 +761,58 @@ document.getElementById('playAgainButton').addEventListener('click', () => {
     resetGame();
     gameLoop();
 });
+
+// Function to capture game over area
+function captureGameOver() {
+    const gameOverArea = document.createElement('canvas');
+    gameOverArea.width = 400;
+    gameOverArea.height = 200;
+    const ctx = gameOverArea.getContext('2d');
+    
+    // Draw black background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, gameOverArea.width, gameOverArea.height);
+    
+    // Draw GAME OVER text
+    ctx.fillStyle = '#FF0000';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', gameOverArea.width/2, 60);
+    
+    // Draw Score with larger font
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 32px Arial';
+    ctx.fillText(gameState.score, gameOverArea.width/2, 100);
+    
+    // Draw High Score with smaller font
+    ctx.font = '20px Arial';
+    ctx.fillText(`high score: ${gameState.highScore}`, gameOverArea.width/2, 140);
+    
+    return gameOverArea.toDataURL();
+}
+
+function shareToFacebook() {
+    const text = encodeURIComponent(`I ACHIEVED 580 POINTS IN METEOR SHOOTER GAME, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=https://meteor-shooter.vercel.app/&quote=${text}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+function shareToX() {
+    const text = encodeURIComponent(`I ACHIEVED 580 POINTS IN METEOR SHOOTER GAME, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const shareUrl = `https://twitter.com/intent/tweet?text=${text}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+function shareToTelegram() {
+    const text = encodeURIComponent(`I ACHIEVED 580 POINTS IN METEOR SHOOTER GAME, how about you? Let's play Meteor Shooter game together!\n\n@https://meteor-shooter.vercel.app/\nA web-based shooting game where you shoot meteors and collect power-ups.`);
+    const shareUrl = `https://t.me/share/url?url=https://meteor-shooter.vercel.app/&text=${text}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+// Add event listeners for share buttons
+document.getElementById('shareToFB').addEventListener('click', shareToFacebook);
+document.getElementById('shareToX').addEventListener('click', shareToX);
+document.getElementById('shareToTelegram').addEventListener('click', shareToTelegram);
 
 // Start game
 gameLoop(); 
