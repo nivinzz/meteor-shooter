@@ -14,11 +14,36 @@ const images = {
     meteor: new Image()
 };
 
+// Âm thanh
+const sounds = {
+    gameStart: new Audio('sounds/gamestart.mp3'),
+    shoot: new Audio('sounds/shoot.mp3'),
+    explosion: new Audio('sounds/explosion.mp3'),
+    powerUp: new Audio('sounds/powerup.mp3'),
+    gameOver: new Audio('sounds/gameover.mp3')
+};
+
+// Thiết lập âm lượng
+sounds.gameStart.volume = 0.4;
+sounds.shoot.volume = 0.3;
+sounds.explosion.volume = 0.4;
+sounds.powerUp.volume = 0.4;
+sounds.gameOver.volume = 0.5;
+
+// Cho phép phát nhiều âm thanh cùng lúc
+function playSound(sound) {
+    // Clone âm thanh để có thể phát nhiều lần
+    const soundClone = sound.cloneNode();
+    soundClone.play().catch(error => console.log("Lỗi phát âm thanh:", error));
+}
+
 // Track loaded images
 let loadedImages = 0;
 const totalImages = Object.keys(images).length;
 
 function startGame() {
+    // Phát nhạc khi bắt đầu game
+    playSound(sounds.gameStart);
     gameLoop();
 }
 
@@ -110,7 +135,8 @@ let gameState = {
     MAX_TEMP_MULTIPLIER: 5,
     MAX_BUBBLE_HITS: 199,
     PET_DROP_CHANCE: 10,
-    explosions: []
+    explosions: [],
+    gameOverSoundPlayed: false
 };
 
 // Classes
@@ -172,6 +198,14 @@ class Meteor {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(Math.max(0, this.hits), this.x, this.y);
+    }
+
+    explode() {
+        // Phát âm thanh nổ
+        playSound(sounds.explosion);
+        gameState.explosions.push(new Explosion(this.x, this.y, this.radius));
+        spawnPowerUpFromBubble(this.x, this.y);
+        gameState.score += this.initialHits;
     }
 }
 
@@ -331,6 +365,8 @@ function resetGame() {
         gameOver: false
     };
     gameOverScreen.style.display = 'none';
+    // Phát nhạc khi bắt đầu game mới
+    playSound(sounds.gameStart);
 }
 
 function spawnMeteor() {
@@ -443,6 +479,9 @@ function spawnPowerUp() {
 function shootArrows() {
     const damage = gameState.baseDamage * gameState.permDamageMultiplier * gameState.tempDamageMultiplier;
     
+    // Phát âm thanh bắn
+    playSound(sounds.shoot);
+    
     switch(gameState.shotType) {
         case 1:
             gameState.arrows.push(new Arrow(gameState.playerX, HEIGHT - 50, damage));
@@ -504,7 +543,14 @@ function drawStars() {
 }
 
 function gameLoop() {
-    if (gameState.gameOver) return;
+    if (gameState.gameOver) {
+        // Phát âm thanh game over
+        if (!gameState.gameOverSoundPlayed) {
+            playSound(sounds.gameOver);
+            gameState.gameOverSoundPlayed = true;
+        }
+        return;
+    }
 
     // Clear canvas
     ctx.fillStyle = COLORS.BLACK;
@@ -561,9 +607,10 @@ function gameLoop() {
     gameState.bubbles = gameState.bubbles.filter(meteor => {
         meteor.move();
         if (meteor.y > HEIGHT) {
-            gameState.hp -= Math.abs(meteor.hits);  // Use absolute value for HP reduction
+            gameState.hp -= Math.abs(meteor.hits);
             if (gameState.hp <= 0) {
                 gameState.gameOver = true;
+                gameState.gameOverSoundPlayed = false;  // Reset trạng thái âm thanh game over
                 if (gameState.score > gameState.highScore) {
                     gameState.highScore = gameState.score;
                     saveHighScore(gameState.highScore);
@@ -584,9 +631,7 @@ function gameLoop() {
                 gameState.arrows.splice(i, 1);
                 gameState.explosions.push(new Explosion(arrow.x, arrow.y, 10));
                 if (meteor.hits <= 0) {
-                    gameState.explosions.push(new Explosion(meteor.x, meteor.y, meteor.radius));
-                    spawnPowerUpFromBubble(meteor.x, meteor.y);
-                    gameState.score += meteor.initialHits;  // Add initial hits as score
+                    meteor.explode();
                     return false;
                 }
             }
@@ -611,6 +656,9 @@ function gameLoop() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < powerUp.radius + playerRect.width / 2) {
+            // Phát âm thanh khi nhặt power-up
+            playSound(sounds.powerUp);
+            
             if (powerUp.type === 'boom') {
                 // Apply damage to all meteors
                 gameState.bubbles.forEach(meteor => {
